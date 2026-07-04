@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>旅行英会話 5分レッスン</title>
+<style>
+  :root {
+    --accent: #1D9E75; --accent-light: #E1F5EE; --accent-dark: #085041;
+    --bg: #FAFAF7; --card: #FFFFFF; --text: #1a1a1a; --text2: #6b6b6b;
+    --border: #e4e4e0; --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; background: var(--bg); color: var(--text); }
+  #app { max-width: 480px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+  .header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
+  .header-icon { width: 40px; height: 40px; background: var(--accent-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .header-icon svg { width: 20px; height: 20px; stroke: var(--accent-dark); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .header-title { font-size: 17px; font-weight: 600; }
+  .header-sub { font-size: 12px; color: var(--text2); }
+  .progress-bar { background: #ececea; border-radius: 99px; height: 6px; margin-bottom: 1.25rem; }
+  .progress-fill { background: var(--accent); border-radius: 99px; height: 6px; transition: width 0.4s ease; }
+  .scene-badge { display: inline-block; background: var(--accent-light); color: var(--accent-dark); font-size: 12px; padding: 4px 12px; border-radius: 8px; margin-bottom: 1rem; font-weight: 500; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .situation { font-size: 13px; color: var(--text2); margin-bottom: 0.75rem; line-height: 1.6; }
+  .phrase-row { display: flex; align-items: center; gap: 10px; margin-bottom: 0.4rem; }
+  .phrase-en { font-size: 20px; font-weight: 600; line-height: 1.45; flex: 1; }
+  .speak-btn { flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; background: var(--accent-light); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+  .speak-btn:active { background: #9FE1CB; }
+  .speak-btn.speaking { background: var(--accent); }
+  .speak-btn svg { width: 17px; height: 17px; stroke: var(--accent-dark); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .speak-btn.speaking svg { stroke: #fff; }
+  .phrase-jp { font-size: 14px; color: var(--text2); margin-bottom: 0.75rem; }
+  .phonetic { font-size: 13px; color: var(--accent); font-style: italic; margin-bottom: 0.25rem; }
+  .tip { font-size: 12.5px; color: var(--text2); background: #f4f4f1; border-radius: 10px; padding: 10px 12px; margin-top: 0.75rem; line-height: 1.7; }
+  .slow-btn { font-size: 13px; background: none; border: 1px solid var(--border); border-radius: 9px; padding: 7px 14px; color: var(--text2); cursor: pointer; margin-top: 8px; }
+  .slow-btn:active { background: #f4f4f1; }
+  .dialog-box { background: #f4f4f1; border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
+  .dialog-speak-row { display: flex; align-items: flex-start; gap: 8px; }
+  .dialog-content { flex: 1; }
+  .dialog-label { font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 2px; }
+  .dialog-en { font-size: 15px; font-weight: 600; }
+  .dialog-jp { font-size: 12px; color: var(--text2); margin-top: 3px; }
+  .mini-speak { flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: var(--accent-light); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 4px; }
+  .mini-speak svg { width: 13px; height: 13px; stroke: var(--accent-dark); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .variants { display: flex; flex-direction: column; gap: 7px; margin: 10px 0; }
+  .variant { background: var(--accent-light); border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .variant-text { flex: 1; }
+  .variant-en { font-size: 14px; font-weight: 600; color: var(--accent-dark); }
+  .variant-jp { font-size: 12px; color: #2a6f56; margin-top: 2px; }
+  .choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
+  .choice-btn { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 13px 14px; font-size: 14.5px; text-align: left; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+  .choice-btn:active { background: #f4f4f1; }
+  .choice-btn.correct { background: #E1F5EE; border-color: #1D9E75; color: #085041; }
+  .choice-btn.wrong { background: #FCEBEB; border-color: #E24B4A; color: #501313; }
+  .choice-speak { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: #f4f4f1; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .choice-speak svg { width: 13px; height: 13px; stroke: var(--text2); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .feedback { font-size: 13.5px; padding: 11px 13px; border-radius: 10px; margin-bottom: 1rem; line-height: 1.6; }
+  .feedback.ok { background: #E1F5EE; color: #085041; }
+  .feedback.ng { background: #FCEBEB; color: #501313; }
+  .primary-btn { background: var(--accent); border: none; border-radius: 10px; padding: 13px 26px; font-size: 15px; color: #fff; cursor: pointer; font-weight: 600; width: 100%; }
+  .primary-btn:active { opacity: 0.85; }
+  .secondary-btn { background: none; border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 14px; color: var(--text2); cursor: pointer; width: 100%; margin-top: 8px; }
+  .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+  .menu-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 0.9rem; cursor: pointer; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .menu-item:active { background: #f4f4f1; }
+  .menu-emoji { font-size: 28px; margin-bottom: 6px; }
+  .menu-name { font-size: 13.5px; font-weight: 600; }
+  .menu-count { font-size: 11px; color: var(--text2); margin-top: 3px; }
+  .intro-card { background: var(--accent-light); border-radius: var(--radius); padding: 1rem 1.1rem; margin-bottom: 1rem; }
+  .intro-title { font-size: 12px; font-weight: 600; color: var(--accent-dark); margin-bottom: 10px; }
+  .intro-line { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+  .intro-en { font-size: 14.5px; font-weight: 600; color: var(--accent-dark); line-height: 1.5; }
+  .intro-ph { font-size: 12px; color: #2a6f56; font-style: italic; margin: 2px 0; }
+  .intro-jp { font-size: 12px; color: #2a6f56; }
+  .final-card { text-align: center; padding: 2rem 1rem; }
+  .score-num { font-size: 52px; font-weight: 700; color: var(--accent); }
+  .score-label { font-size: 14px; color: var(--text2); margin: 6px 0 1.5rem; }
+  .summary { font-size: 13px; color: var(--text2); line-height: 2; margin-bottom: 1.5rem; text-align: left; background: #f4f4f1; border-radius: 10px; padding: 12px 16px; }
+  .tts-note { font-size: 11px; color: var(--text2); text-align: center; margin-top: 0.75rem; }
+  .back-link { font-size: 13px; color: var(--text2); background: none; border: none; cursor: pointer; padding: 4px 0; margin-bottom: 0.75rem; display: inline-flex; align-items: center; gap: 4px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ============ レッスンデータ ============
+const scenes = [
+  {
+    id: "airport", name: "空港", emoji: "✈️",
+    steps: [
+      { type:"learn", situation:"カウンターで搭乗手続きをするとき", en:"I'd like to check in, please.", jp:"チェックインをお願いします。", phonetic:"アイド ライク トゥ チェック イン、プリーズ", tip:"「I'd like to ~」は丁寧な依頼の定番表現。「I want to ~」より上品な印象です。" },
+      { type:"learn", situation:"荷物を預けるとき", en:"I have two bags to check.", jp:"預ける荷物が2つあります。", phonetic:"アイ ハヴ トゥー バッグズ トゥ チェック", tip:"「check」は荷物を「預ける」という意味で使えます。" },
+      { type:"quiz", question:"窓側の席をリクエストしたい。なんと言う？", choices:["Can I have a window seat?","I want window.","Give me window seat.","Window, please ticket."], answer:0, feedback_ok:"正解！「Can I have ~?」は「〜をもらえますか？」という便利な表現です。", feedback_ng:"正解は「Can I have a window seat?」です。丁寧で自然な英語です。" }
+    ]
+  },
+  {
+    id: "immigration", name: "入国審査", emoji: "🛂",
+    steps: [
+      { type:"learn", situation:"審査官にパスポートを渡すとき", en:"Here is my passport.", jp:"パスポートです。どうぞ。", phonetic:"ヒア イズ マイ パスポート", tip:"シンプルに渡しながら言うだけでOK。笑顔が一番のコミュニケーションです。" },
+      { type:"dialog", situation:"入国目的を聞かれる（よくある質問と答え方）", dialogs:[
+        { speaker:"審査官", en:"What is the purpose of your visit?", jp:"渡航目的は何ですか？" },
+        { speaker:"あなた", en:"I'm here for sightseeing.", jp:"観光です。" },
+        { speaker:"審査官", en:"How long will you stay?", jp:"どのくらい滞在しますか？" },
+        { speaker:"あなた", en:"For one week.", jp:"1週間です。" }
+      ], tip:"「sightseeing（観光）」「business（仕事）」「visiting family（家族訪問）」など目的に合わせて変えましょう。" },
+      { type:"quiz", question:"「どこに泊まりますか？」と聞かれた。なんと答える？", choices:["I'm staying at a hotel in Tokyo.","I stay hotel.","Tokyo hotel my place.","Yes, I have hotel."], answer:0, feedback_ok:"正解！「I'm staying at ~」で宿泊先を伝えられます。ホテル名を言ってもOKです。", feedback_ng:"正解は「I'm staying at a hotel in Tokyo.」です。「I'm staying at + 場所」が自然な言い方です。" }
+    ]
+  },
+  {
+    id: "customs", name: "手荷物検査", emoji: "🧳",
+    steps: [
+      { type:"learn", situation:"荷物を開けるよう言われたとき", en:"Sure, go ahead.", jp:"はい、どうぞ。", phonetic:"シュア、ゴー アヘッド", tip:"「Sure」は「もちろん」という意味。検査に協力する姿勢を示すスマートな一言です。" },
+      { type:"dialog", situation:"持ち込み品について聞かれる", dialogs:[
+        { speaker:"検査官", en:"Do you have anything to declare?", jp:"申告するものはありますか？" },
+        { speaker:"あなた", en:"No, I have nothing to declare.", jp:"いいえ、何もありません。" },
+        { speaker:"検査官", en:"Are you carrying any liquids?", jp:"液体類は持っていますか？" },
+        { speaker:"あなた", en:"Just a water bottle.", jp:"水のボトルだけです。" }
+      ], tip:"「declare（申告する）」は関税申告のキーワード。免税範囲を超えるものがあれば正直に申告しましょう。" },
+      { type:"learn", situation:"持ち込み品の説明が必要なとき", en:"These are personal items.", jp:"これらは個人の持ち物です。", phonetic:"ジーズ アー パーソナル アイテムズ", tip:"お土産なら「These are souvenirs.」、仕事の道具なら「These are for work.」と言えます。" },
+      { type:"quiz", question:"検査官に「バッグを開けてください」と言われた。どう答える？", choices:["Of course. Here you go.","No open bag.","I don't want.","Bag is mine."], answer:0, feedback_ok:"正解！「Of course. Here you go.」は「もちろん、どうぞ」という丁寧でスムーズな返し方です。", feedback_ng:"正解は「Of course. Here you go.」です。検査には笑顔で協力的な態度が大切です。" }
+    ]
+  },
+  {
+    id: "hotel", name: "ホテル", emoji: "🏨",
+    steps: [
+      { type:"learn", situation:"フロントデスクに到着したとき", en:"I have a reservation under Tanaka.", jp:"田中という名前で予約しています。", phonetic:"アイ ハヴ ア レザベーション アンダー タナカ", tip:"「under ~」は「〜の名前で」という意味。名前で予約を確認するときの定番フレーズ！" },
+      { type:"learn", situation:"部屋の設備について聞くとき", en:"Does the room have free Wi-Fi?", jp:"部屋に無料Wi-Fiはありますか？", phonetic:"ダズ ザ ルーム ハヴ フリー ワイファイ", tip:"「Does ~ have ~?」で設備の有無を確認できます。Wi-Fiは世界共通で通じます。" },
+      { type:"quiz", question:"チェックアウトは何時か聞きたいとき", choices:["What time is breakfast?","What time is check-out?","When you check-out?","Check-out time what?"], answer:1, feedback_ok:"正解！「What time is ~?」で時間を確認できます。", feedback_ng:"正解は「What time is check-out?」です。シンプルで伝わりやすい表現です。" }
+    ]
+  },
+  {
+    id: "restaurant", name: "レストラン", emoji: "🍽️",
+    steps: [
+      { type:"learn", situation:"席を案内されるとき", en:"A table for two, please.", jp:"2人用のテーブルをお願いします。", phonetic:"ア テーブル フォー トゥー、プリーズ", tip:"人数を変えるだけで使えます。3人なら「A table for three」、1人なら「A table for one」。" },
+      { type:"learn", situation:"注文するとき", en:"I'll have the pasta, please.", jp:"パスタをいただきます。", phonetic:"アイル ハヴ ザ パスタ、プリーズ", tip:"「I'll have ~」は注文の鉄板フレーズ。メニューを指さしながら「I'll have this」でも通じます！" },
+      { type:"quiz", question:"おすすめを聞きたいとき、なんと言う？", choices:["What do you recommend?","What is good food?","Tell me delicious.","Best food what?"], answer:0, feedback_ok:"正解！「What do you recommend?」はどんな場面でも使える便利フレーズです。", feedback_ng:"正解は「What do you recommend?」。シェフや店員におすすめを聞くときに使いましょう。" }
+    ]
+  },
+  {
+    id: "money", name: "両替", emoji: "💱",
+    steps: [
+      { type:"learn", situation:"両替カウンターで両替をお願いするとき", en:"I'd like to exchange some money, please.", jp:"両替をお願いしたいのですが。", phonetic:"アイド ライク トゥ イクスチェンジ サム マネー、プリーズ", tip:"「exchange money」が両替のキーワード。銀行・空港どこでも通じます。" },
+      { type:"dialog", situation:"両替カウンターでの会話", dialogs:[
+        { speaker:"あなた", en:"I'd like to exchange 50,000 yen into US dollars.", jp:"5万円をドルに両替したいです。" },
+        { speaker:"スタッフ", en:"Sure. Today's rate is 1 dollar to 145 yen.", jp:"かしこまりました。本日のレートは1ドル145円です。" },
+        { speaker:"あなた", en:"What is the exchange rate today?", jp:"今日の為替レートはいくらですか？" },
+        { speaker:"あなた", en:"Are there any fees?", jp:"手数料はかかりますか？" }
+      ], tip:"「yen into dollars」の形で「○○を△△に」と両替の方向を伝えられます。euros（ユーロ）、pounds（ポンド）なども同じ形で使えます。" },
+      { type:"variants", situation:"両替で使えるひとこと表現", variants:[
+        { en:"Can I have smaller bills?", jp:"小さいお札にしてもらえますか？" },
+        { en:"Could I get some coins as well?", jp:"コインも少しもらえますか？" },
+        { en:"Is this the best rate?", jp:"これが最良のレートですか？" }
+      ], tip:"両替後に「Thank you. Have a nice day!」と言うと、とても自然な会話の締めになります。" },
+      { type:"quiz", question:"「手数料はいくらですか？」を英語で言うと？", choices:["What is the fee?","How much money cost?","Fee is how?","Money charge what?"], answer:0, feedback_ok:"正解！「What is the fee?」はシンプルで通じる表現です。「Is there a fee?」（手数料はありますか？）も使えます。", feedback_ng:"正解は「What is the fee?」です。「fee（手数料）」は覚えておくと便利な単語です。" }
+    ]
+  },
+  {
+    id: "taxi", name: "タクシー", emoji: "🚕",
+    steps: [
+      { type:"learn", situation:"タクシーに乗ってまず行き先を伝えるとき", en:"To the Hilton Hotel, please.", jp:"ヒルトンホテルまでお願いします。", phonetic:"トゥ ザ ヒルトン ホテル、プリーズ", tip:"「To ＋ 場所 ＋ please」だけでOK！目的地の名前を入れ替えるだけで使えます。" },
+      { type:"dialog", situation:"タクシー乗車中の会話", dialogs:[
+        { speaker:"あなた", en:"Could you take me to the city center?", jp:"市内中心部まで連れて行ってもらえますか？" },
+        { speaker:"運転手", en:"Sure. Do you know the address?", jp:"かしこまりました。住所はわかりますか？" },
+        { speaker:"あなた", en:"Here is the address on my phone.", jp:"スマホに住所があります。" },
+        { speaker:"あなた", en:"How long will it take?", jp:"どのくらいかかりますか？" }
+      ], tip:"スマホの地図を見せながら「Here」と言うだけでも伝わります。住所は英語で表示しておくと安心です。" },
+      { type:"variants", situation:"タクシーで使えるひとこと表現", variants:[
+        { en:"Please stop here.", jp:"ここで止めてください。" },
+        { en:"Can you turn on the meter?", jp:"メーターをつけてもらえますか？" },
+        { en:"Do you accept credit cards?", jp:"クレジットカードは使えますか？" }
+      ], tip:"降りるときは「Keep the change.（おつりはいりません）」も覚えておくとスマートです。" },
+      { type:"quiz", question:"「急いでいます」とドライバーに伝えたいとき", choices:["I'm in a hurry, please.","I am hurry go fast.","Speed up car now.","Fast fast please."], answer:0, feedback_ok:"正解！「I'm in a hurry.」は「急いでいます」の定番表現。ただし、スピード違反はNG！", feedback_ng:"正解は「I'm in a hurry, please.」です。「in a hurry（急いでいる）」は旅行中に役立つ表現です。" }
+    ]
+  },
+  {
+    id: "station", name: "駅・道案内", emoji: "🚉",
+    steps: [
+      { type:"learn", situation:"駅への道を聞くとき", en:"Excuse me, where is the nearest train station?", jp:"すみません、一番近い駅はどこですか？", phonetic:"イクスキューズ ミー、ウェア イズ ザ ニアレスト トレイン ステーション", tip:"「Excuse me」から始めると丁寧な印象に。「nearest（最寄りの）」は旅行中に何度も使える便利な単語です。" },
+      { type:"dialog", situation:"道を教えてもらう会話", dialogs:[
+        { speaker:"あなた", en:"Excuse me, how do I get to the subway?", jp:"すみません、地下鉄への行き方を教えてください。" },
+        { speaker:"通行人", en:"Go straight and turn left at the corner.", jp:"まっすぐ行って角を左に曲がってください。" },
+        { speaker:"あなた", en:"How far is it?", jp:"どのくらい距離がありますか？" },
+        { speaker:"通行人", en:"About a five-minute walk.", jp:"歩いて約5分です。" }
+      ], tip:"「Go straight（まっすぐ）」「turn left / right（左/右に曲がる）」「on the left / right（左/右側に）」が道案内の3大フレーズです。" },
+      { type:"variants", situation:"駅・交通で使えるひとこと表現", variants:[
+        { en:"Which platform for Tokyo?", jp:"東京行きは何番ホームですか？" },
+        { en:"One ticket to Osaka, please.", jp:"大阪まで1枚お願いします。" },
+        { en:"Does this train stop at Kyoto?", jp:"この電車は京都に止まりますか？" }
+      ], tip:"「Which line should I take?（何線に乗ればいいですか？）」も地下鉄でよく使うフレーズです。" },
+      { type:"quiz", question:"「この電車は渋谷に行きますか？」を英語で言うと？", choices:["Does this train go to Shibuya?","This train Shibuya?","Train goes Shibuya yes?","Is Shibuya this train stop?"], answer:0, feedback_ok:"正解！「Does this ～ go to ～?」は電車・バス両方に使えるパターンです。", feedback_ng:"正解は「Does this train go to Shibuya?」です。「go to + 場所」で行き先を確認できます。" }
+    ]
+  },
+  {
+    id: "intro", name: "自己紹介", emoji: "👋",
+    steps: [
+      { type:"intro", situation:"旅先での自己紹介、まずこの3文をマスターしよう！", lines:[
+        { en:"Hi, I'm Yuki. Nice to meet you!", jp:"こんにちは、ユキです。はじめまして！", phonetic:"ハイ、アイム ユキ。ナイス トゥ ミート ユー" },
+        { en:"I'm from Japan.", jp:"日本から来ました。", phonetic:"アイム フロム ジャパン" },
+        { en:"This is my first time here!", jp:"ここに来るのは初めてです！", phonetic:"ディス イズ マイ ファースト タイム ヒア" }
+      ], tip:"「Nice to meet you!」に対して相手は「Nice to meet you too!」と返してくれます。笑顔が一番の挨拶です。" },
+      { type:"learn", situation:"仕事について聞かれたとき", en:"I work in food manufacturing.", jp:"食品製造の仕事をしています。", phonetic:"アイ ワーク イン フード マニュファクチャリング", tip:"「I work in + 業界」で業界を伝えられます。「I'm in food manufacturing.」も同じ意味で使えます。" },
+      { type:"dialog", situation:"旅先で出会った人との会話", dialogs:[
+        { speaker:"相手", en:"Is this your first time in London?", jp:"ロンドンは初めてですか？" },
+        { speaker:"あなた", en:"Yes! It's my first time. Everything is so amazing!", jp:"はい、初めてです。すべてが素晴らしいです！" },
+        { speaker:"相手", en:"Where are you from?", jp:"どちらからいらっしゃいましたか？" },
+        { speaker:"あなた", en:"I'm from Japan. I work in food manufacturing.", jp:"日本から来ました。食品製造の仕事をしています。" },
+        { speaker:"相手", en:"That's interesting! How long are you staying?", jp:"面白いですね！どのくらい滞在しますか？" },
+        { speaker:"あなた", en:"For about a week. Do you have any recommendations?", jp:"約1週間です。おすすめはありますか？" }
+      ], tip:"「That's interesting!（それは面白いですね！）」と言ってもらえたら会話のチャンス。質問を返すと会話が続きます。" },
+      { type:"variants", situation:"自己紹介のあとに続けやすい一言フレーズ", variants:[
+        { en:"I'm really enjoying this trip.", jp:"この旅をとても楽しんでいます。" },
+        { en:"The food here is amazing!", jp:"ここの食べ物は素晴らしいです！" },
+        { en:"I've always wanted to visit here.", jp:"ずっとここに来たかったんです。" },
+        { en:"What do you recommend for sightseeing?", jp:"観光でおすすめはありますか？" }
+      ], tip:"食品製造の仕事柄、「The local food is really interesting to me.（地元の食べ物がとても興味深いです）」と言うと自然に会話が広がります！" },
+      { type:"learn", situation:"別れ際の挨拶", en:"It was nice meeting you. Enjoy your day!", jp:"お会いできてよかったです。良い一日を！", phonetic:"イット ワズ ナイス ミーティング ユー。エンジョイ ユア デイ", tip:"「Nice to meet you」（初めて会うとき）→「Nice meeting you」（別れるとき）と使い分けます。" },
+      { type:"quiz", question:"相手に「あなたの仕事は何ですか？」と聞きたいとき", choices:["What do you do for work?","Your job is what?","What work you have?","Tell me your working."], answer:0, feedback_ok:"正解！「What do you do?」だけでも仕事を聞く表現として通じます。", feedback_ng:"正解は「What do you do for work?」です。「What do you do?」は仕事を聞く定番フレーズです。" }
+    ]
+  },
+  {
+    id: "help", name: "困ったとき", emoji: "🆘",
+    steps: [
+      { type:"learn", situation:"英語がわからなかったとき", en:"Could you say that again, please?", jp:"もう一度言っていただけますか？", phonetic:"クジュー セイ ザット アゲン、プリーズ", tip:"わからないときは聞き返すのが一番！黙ってしまうより印象が良くなります。" },
+      { type:"learn", situation:"もっとゆっくり話してほしいとき", en:"Could you speak more slowly, please?", jp:"もう少しゆっくり話していただけますか？", phonetic:"クジュー スピーク モア スローリー、プリーズ", tip:"旅行中で一番使えるフレーズのひとつ。恥ずかしがらずに使いましょう！" },
+      { type:"quiz", question:"日本語のわかるスタッフを呼んでほしいとき", choices:["Is there anyone who speaks Japanese?","Japanese person come here.","I need Japan language.","Call Japanese now please."], answer:0, feedback_ok:"正解！「Is there anyone who ~?」は「〜できる人はいますか？」という便利な表現です。", feedback_ng:"正解は「Is there anyone who speaks Japanese?」です。覚えておくと安心のフレーズです。" }
+    ]
+  }
+];
+
+// ============ 状態 ============
+let view = "menu"; // menu | lesson | final
+let sceneIdx = 0, stepIdx = 0, score = 0, total = 0, answered = false;
+let femaleVoice = null, voiceName = "";
+
+// ============ 音声（女性の声を優先） ============
+const femaleKeywords=['female','woman','girl','samantha','karen','victoria','moira','fiona','tessa','veena','zira','susan','catherine','alice','amelie','anna','joana','laura','lucia','mei-jia','milena','monica','nora','paulina','sara','satu','zosia','ioana','kyoko','o-ren'];
+
+function pickFemaleVoice(){
+  if(!window.speechSynthesis) return null;
+  const voices = window.speechSynthesis.getVoices();
+  const en = voices.filter(v=>v.lang.startsWith('en'));
+  let v = en.find(v=>femaleKeywords.some(k=>v.name.toLowerCase().includes(k)));
+  if(v) return v;
+  for(const lang of ['en-US','en-GB','en-AU']){
+    v = en.find(v=>v.lang===lang && v.localService);
+    if(v) return v;
+  }
+  return en.find(v=>v.lang==='en-US') || en[0] || null;
+}
+function initVoice(){ femaleVoice = pickFemaleVoice(); voiceName = femaleVoice ? femaleVoice.name : ""; }
+
+function speak(text, rate=1){
+  if(!window.speechSynthesis) return null;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang='en-US'; u.rate=rate; u.pitch=1.1;
+  if(femaleVoice) u.voice = femaleVoice;
+  window.speechSynthesis.speak(u);
+  return u;
+}
+function speakIcon(){ return `<svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`; }
+function handleSpeak(text, rate, btnId){
+  const btn = document.getElementById(btnId);
+  if(window.speechSynthesis.speaking){
+    window.speechSynthesis.cancel();
+    document.querySelectorAll('.speak-btn').forEach(b=>b.classList.remove('speaking'));
+    return;
+  }
+  document.querySelectorAll('.speak-btn').forEach(b=>b.classList.remove('speaking'));
+  if(btn) btn.classList.add('speaking');
+  const u = speak(text, rate);
+  if(u && btn) u.onend = ()=>btn.classList.remove('speaking');
+}
+function es(s){ return s.replace(/'/g,"\\'"); }
+
+// ============ レンダリング ============
+function render(){
+  if(view === "menu") renderMenu();
+  else if(view === "final") renderFinal();
+  else renderLesson();
+}
+
+function renderMenu(){
+  const app = document.getElementById('app');
+  const items = scenes.map((s,i)=>`
+    <div class="menu-item" onclick="startScene(${i})">
+      <div class="menu-emoji">${s.emoji}</div>
+      <div class="menu-name">${s.name}</div>
+      <div class="menu-count">${s.steps.length}ステップ</div>
+    </div>`).join('');
+  app.innerHTML = `
+    <div class="header">
+      <div class="header-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg></div>
+      <div>
+        <div class="header-title">旅行英会話 5分レッスン</div>
+        <div class="header-sub">シーンを選んでスタート</div>
+      </div>
+    </div>
+    <div class="menu-grid">${items}</div>
+    <div class="tts-note">音声はブラウザのText-to-Speech（女性の声）を使用します</div>`;
+}
+
+function startScene(i){
+  sceneIdx = i; stepIdx = 0; score = 0; total = 0; answered = false;
+  view = "lesson";
+  render();
+}
+
+function currentScene(){ return scenes[sceneIdx]; }
+function currentStep(){ return scenes[sceneIdx].steps[stepIdx]; }
+
+function renderLesson(){
+  const app = document.getElementById('app');
+  const scene = currentScene();
+  const step = currentStep();
+  const ts = scene.steps.length;
+  const pct = Math.round((stepIdx / ts) * 100);
+  let content = '';
+
+  if(step.type === 'learn'){
+    content = `
+      <div class="card">
+        <div class="situation">${step.situation}</div>
+        <div class="phrase-row">
+          <div class="phrase-en">${step.en}</div>
+          <button class="speak-btn" id="speakMain" onclick="handleSpeak('${es(step.en)}',1,'speakMain')">${speakIcon()}</button>
+        </div>
+        <div class="phonetic">${step.phonetic}</div>
+        <div class="phrase-jp">${step.jp}</div>
+        <button class="slow-btn" id="speakSlow" onclick="handleSpeak('${es(step.en)}',0.65,'speakSlow')">ゆっくり再生 ▶</button>
+        <div class="tip">ポイント: ${step.tip}</div>
+      </div>
+      <button class="primary-btn" id="nextBtn">次へ →</button>`;
+
+  } else if(step.type === 'dialog'){
+    const dHtml = step.dialogs.map(d=>{
+      const isYou = d.speaker === 'あなた';
+      return `<div class="dialog-box" style="border-left:3px solid ${isYou ? 'var(--accent)' : 'var(--border)'};">
+        <div class="dialog-speak-row">
+          <div class="dialog-content">
+            <div class="dialog-label">${d.speaker}</div>
+            <div class="dialog-en">${d.en}</div>
+            <div class="dialog-jp">${d.jp}</div>
+          </div>
+          <button class="mini-speak" onclick="speak('${es(d.en)}',1)">${speakIcon()}</button>
+        </div>
+      </div>`;
+    }).join('');
+    content = `
+      <div class="card">
+        <div class="situation">${step.situation}</div>
+        ${dHtml}
+        <div class="tip">ポイント: ${step.tip}</div>
+      </div>
+      <button class="primary-btn" id="nextBtn">次へ →</button>`;
+
+  } else if(step.type === 'variants'){
+    const vHtml = step.variants.map(v=>`
+      <div class="variant">
+        <div class="variant-text"><div class="variant-en">${v.en}</div><div class="variant-jp">${v.jp}</div></div>
+        <button class="mini-speak" onclick="speak('${es(v.en)}',1)">${speakIcon()}</button>
+      </div>`).join('');
+    content = `
+      <div class="card">
+        <div class="situation">${step.situation}</div>
+        <div class="variants">${vHtml}</div>
+        <div class="tip">ポイント: ${step.tip}</div>
+      </div>
+      <button class="primary-btn" id="nextBtn">次へ →</button>`;
+
+  } else if(step.type === 'intro'){
+    const lHtml = step.lines.map(l=>`
+      <div class="intro-line">
+        <div style="flex:1">
+          <div class="intro-en">${l.en}</div>
+          <div class="intro-ph">${l.phonetic}</div>
+          <div class="intro-jp">${l.jp}</div>
+        </div>
+        <button class="mini-speak" onclick="speak('${es(l.en)}',1)">${speakIcon()}</button>
+      </div>`).join('');
+    content = `
+      <div class="card">
+        <div class="situation">${step.situation}</div>
+        <div class="intro-card">
+          <div class="intro-title">🗣 自己紹介セット</div>
+          ${lHtml}
+        </div>
+        <div class="tip">ポイント: ${step.tip}</div>
+      </div>
+      <button class="primary-btn" id="nextBtn">次へ →</button>`;
+
+  } else { // quiz
+    const cHtml = step.choices.map((c,i)=>`
+      <button class="choice-btn" data-idx="${i}" id="choice${i}">
+        <span>${c}</span>
+        <span class="choice-speak" onclick="event.stopPropagation();speak('${es(c)}',1)">${speakIcon()}</span>
+      </button>`).join('');
+    content = `
+      <div class="card">
+        <div class="situation" style="font-weight:600;color:var(--text);margin-bottom:1rem;">${step.question}</div>
+        <div class="choices">${cHtml}</div>
+        <div id="feedback" style="display:none;"></div>
+      </div>
+      <button class="primary-btn" id="nextBtn" style="display:none;">次へ →</button>`;
+  }
+
+  app.innerHTML = `
+    <button class="back-link" onclick="backToMenu()">← シーン一覧に戻る</button>
+    <div class="header">
+      <div class="header-icon" style="font-size:20px;">${scene.emoji}</div>
+      <div>
+        <div class="header-title">${scene.name}</div>
+        <div class="header-sub">${stepIdx + 1} / ${ts} ステップ</div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    ${content}
+    <div class="tts-note">スピーカーボタンで発音を再生（女性の声）</div>`;
+
+  document.getElementById('nextBtn')?.addEventListener('click', goNext);
+
+  if(step.type === 'quiz'){
+    document.querySelectorAll('.choice-btn').forEach(btn=>{
+      btn.addEventListener('click', function(ev){
+        if(ev.target.closest('.choice-speak')) return;
+        if(answered) return;
+        answered = true; total++;
+        const chosen = parseInt(this.dataset.idx), correct = step.answer;
+        const fb = document.getElementById('feedback');
+        fb.style.display = 'block';
+        if(chosen === correct){
+          score++;
+          this.classList.add('correct');
+          fb.className = 'feedback ok'; fb.textContent = step.feedback_ok;
+          speak(step.choices[correct], 1);
+        } else {
+          this.classList.add('wrong');
+          document.getElementById('choice'+correct).classList.add('correct');
+          fb.className = 'feedback ng'; fb.textContent = step.feedback_ng;
+          setTimeout(()=>speak(step.choices[correct],1), 600);
+        }
+        document.getElementById('nextBtn').style.display = 'block';
+      });
+    });
+  }
+}
+
+function goNext(){
+  answered = false;
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  if(stepIdx + 1 < currentScene().steps.length){
+    stepIdx++;
+    renderLesson();
+  } else {
+    view = "final";
+    render();
+  }
+}
+
+function backToMenu(){
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  view = "menu";
+  render();
+}
+
+function renderFinal(){
+  const app = document.getElementById('app');
+  const scene = currentScene();
+  const pct = total > 0 ? Math.round((score/total)*100) : 100;
+  const comment = pct >= 100 ? "完璧！素晴らしい！" : pct >= 67 ? "よくできました！" : "もう一度復習してみましょう！";
+  const phraseList = scene.steps
+    .filter(s=>s.type==='learn')
+    .map(s=>`「${s.en}」${s.jp}`)
+    .join('<br>');
+  app.innerHTML = `
+    <div class="header">
+      <div class="header-icon" style="font-size:20px;">🎉</div>
+      <div>
+        <div class="header-title">${scene.name} 完了！</div>
+        <div class="header-sub">お疲れさまでした</div>
+      </div>
+    </div>
+    <div class="card final-card">
+      <div class="score-num">${total>0 ? score+'/'+total : '✓'}</div>
+      <div class="score-label">${total>0 ? 'クイズ正解数 — '+comment : 'レッスンを最後まで完了しました！'}</div>
+      ${phraseList ? `<div class="summary">今日学んだフレーズ：<br>${phraseList}</div>` : ''}
+      <button class="primary-btn" onclick="startScene(${sceneIdx})">もう一度チャレンジ ↺</button>
+      <button class="secondary-btn" onclick="backToMenu()">シーン一覧に戻る</button>
+    </div>`;
+}
+
+// ============ 初期化 ============
+if(window.speechSynthesis){
+  const v = window.speechSynthesis.getVoices();
+  if(v.length > 0) initVoice();
+  else window.speechSynthesis.onvoiceschanged = initVoice;
+}
+render();
+</script>
+</body>
+</html>
