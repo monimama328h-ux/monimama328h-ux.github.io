@@ -35,6 +35,7 @@
   .tip { font-size: 12.5px; color: var(--text2); background: #f4f4f1; border-radius: 10px; padding: 10px 12px; margin-top: 0.75rem; line-height: 1.7; }
   .slow-btn { font-size: 13px; background: none; border: 1px solid var(--border); border-radius: 9px; padding: 7px 14px; color: var(--text2); cursor: pointer; margin-top: 8px; }
   .slow-btn:active { background: #f4f4f1; }
+  .slow-btn.speaking { background: var(--accent); color: #fff; border-color: var(--accent); }
   .dialog-box { background: #f4f4f1; border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
   .dialog-speak-row { display: flex; align-items: flex-start; gap: 8px; }
   .dialog-content { flex: 1; }
@@ -67,6 +68,7 @@
   .menu-emoji { font-size: 28px; margin-bottom: 6px; }
   .menu-name { font-size: 13.5px; font-weight: 600; }
   .menu-count { font-size: 11px; color: var(--text2); margin-top: 3px; }
+  .menu-done { font-size: 11px; color: var(--accent-dark); font-weight: 600; margin-top: 3px; }
   .intro-card { background: var(--accent-light); border-radius: var(--radius); padding: 1rem 1.1rem; margin-bottom: 1rem; }
   .intro-title { font-size: 12px; font-weight: 600; color: var(--accent-dark); margin-bottom: 10px; }
   .intro-line { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
@@ -143,10 +145,10 @@ const scenes = [
     steps: [
       { type:"learn", situation:"両替カウンターで両替をお願いするとき", en:"I'd like to exchange some money, please.", jp:"両替をお願いしたいのですが。", phonetic:"アイド ライク トゥ イクスチェンジ サム マネー、プリーズ", tip:"「exchange money」が両替のキーワード。銀行・空港どこでも通じます。" },
       { type:"dialog", situation:"両替カウンターでの会話", dialogs:[
-        { speaker:"あなた", en:"I'd like to exchange 50,000 yen into US dollars.", jp:"5万円をドルに両替したいです。" },
-        { speaker:"スタッフ", en:"Sure. Today's rate is 1 dollar to 145 yen.", jp:"かしこまりました。本日のレートは1ドル145円です。" },
         { speaker:"あなた", en:"What is the exchange rate today?", jp:"今日の為替レートはいくらですか？" },
-        { speaker:"あなた", en:"Are there any fees?", jp:"手数料はかかりますか？" }
+        { speaker:"スタッフ", en:"Today's rate is 1 dollar to 145 yen.", jp:"本日のレートは1ドル145円です。" },
+        { speaker:"あなた", en:"I'd like to exchange 50,000 yen into US dollars. Are there any fees?", jp:"5万円をドルに両替したいです。手数料はかかりますか？" },
+        { speaker:"スタッフ", en:"There is a two percent service fee.", jp:"2％の手数料がかかります。" }
       ], tip:"「yen into dollars」の形で「○○を△△に」と両替の方向を伝えられます。euros（ユーロ）、pounds（ポンド）なども同じ形で使えます。" },
       { type:"variants", situation:"両替で使えるひとこと表現", variants:[
         { en:"Can I have smaller bills?", jp:"小さいお札にしてもらえますか？" },
@@ -229,6 +231,25 @@ const scenes = [
   }
 ];
 
+// ============ 学習履歴（この端末のブラウザに保存） ============
+const STORAGE_KEY = 'travelEnglishProgress';
+function loadProgress(){
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e){ return {}; }
+}
+function saveProgress(sceneId, score, total){
+  try {
+    const p = loadProgress();
+    const prev = p[sceneId];
+    // ベストスコアを保持
+    if(!prev || total === 0 || prev.total === 0 || (score/total) >= (prev.score/prev.total)){
+      p[sceneId] = { done: true, score: score, total: total };
+    } else {
+      p[sceneId].done = true;
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+  } catch(e){ /* プライベートブラウズ等で保存不可でも動作継続 */ }
+}
+
 // ============ 状態 ============
 let view = "menu"; // menu | lesson | final
 let sceneIdx = 0, stepIdx = 0, score = 0, total = 0, answered = false;
@@ -254,26 +275,36 @@ function initVoice(){ femaleVoice = pickFemaleVoice(); voiceName = femaleVoice ?
 function speak(text, rate=1){
   if(!window.speechSynthesis) return null;
   window.speechSynthesis.cancel();
+  // iOS/Safariで声リストの読み込みが遅れることがあるため、未取得なら再取得
+  if(!femaleVoice) initVoice();
   const u = new SpeechSynthesisUtterance(text);
   u.lang='en-US'; u.rate=rate; u.pitch=1.1;
   if(femaleVoice) u.voice = femaleVoice;
-  window.speechSynthesis.speak(u);
+  // cancel()直後のspeak()が無音になるブラウザがあるため少し遅らせる
+  setTimeout(()=>window.speechSynthesis.speak(u), 60);
   return u;
 }
 function speakIcon(){ return `<svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`; }
+let speakingBtnId = null;
+function clearSpeaking(){
+  document.querySelectorAll('.speak-btn, .slow-btn').forEach(b=>b.classList.remove('speaking'));
+  speakingBtnId = null;
+}
 function handleSpeak(text, rate, btnId){
   const btn = document.getElementById(btnId);
-  if(window.speechSynthesis.speaking){
+  // 同じボタンをもう一度押したら停止。別のボタンなら新しい音声を再生。
+  if(window.speechSynthesis.speaking && speakingBtnId === btnId){
     window.speechSynthesis.cancel();
-    document.querySelectorAll('.speak-btn').forEach(b=>b.classList.remove('speaking'));
+    clearSpeaking();
     return;
   }
-  document.querySelectorAll('.speak-btn').forEach(b=>b.classList.remove('speaking'));
+  clearSpeaking();
   if(btn) btn.classList.add('speaking');
+  speakingBtnId = btnId;
   const u = speak(text, rate);
-  if(u && btn) u.onend = ()=>btn.classList.remove('speaking');
+  if(u){ u.onend = clearSpeaking; u.onerror = clearSpeaking; }
 }
-function es(s){ return s.replace(/'/g,"\\'"); }
+function es(s){ return s.replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;"); }
 
 // ============ レンダリング ============
 function render(){
@@ -284,12 +315,19 @@ function render(){
 
 function renderMenu(){
   const app = document.getElementById('app');
-  const items = scenes.map((s,i)=>`
+  const progress = loadProgress();
+  const items = scenes.map((s,i)=>{
+    const p = progress[s.id];
+    const badge = p && p.done
+      ? `<div class="menu-done">✓ 完了${p.total > 0 ? '・ベスト '+p.score+'/'+p.total : ''}</div>`
+      : `<div class="menu-count">${s.steps.length}ステップ</div>`;
+    return `
     <div class="menu-item" onclick="startScene(${i})">
       <div class="menu-emoji">${s.emoji}</div>
       <div class="menu-name">${s.name}</div>
-      <div class="menu-count">${s.steps.length}ステップ</div>
-    </div>`).join('');
+      ${badge}
+    </div>`;
+  }).join('');
   app.innerHTML = `
     <div class="header">
       <div class="header-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg></div>
@@ -316,7 +354,7 @@ function renderLesson(){
   const scene = currentScene();
   const step = currentStep();
   const ts = scene.steps.length;
-  const pct = Math.round((stepIdx / ts) * 100);
+  const pct = Math.round(((stepIdx + 1) / ts) * 100);
   let content = '';
 
   if(step.type === 'learn'){
@@ -468,6 +506,7 @@ function backToMenu(){
 function renderFinal(){
   const app = document.getElementById('app');
   const scene = currentScene();
+  saveProgress(scene.id, score, total);
   const pct = total > 0 ? Math.round((score/total)*100) : 100;
   const comment = pct >= 100 ? "完璧！素晴らしい！" : pct >= 67 ? "よくできました！" : "もう一度復習してみましょう！";
   const phraseList = scene.steps
