@@ -69,6 +69,11 @@
   .menu-name { font-size: 13.5px; font-weight: 600; }
   .menu-count { font-size: 11px; color: var(--text2); margin-top: 3px; }
   .menu-done { font-size: 11px; color: var(--accent-dark); font-weight: 600; margin-top: 3px; }
+  .review-btn { width: 100%; background: var(--accent-dark); border: none; border-radius: var(--radius); padding: 1rem; color: #fff; cursor: pointer; text-align: center; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .review-btn:active { opacity: 0.85; }
+  .review-title { font-size: 15px; font-weight: 600; }
+  .review-sub { font-size: 11.5px; opacity: 0.85; margin-top: 3px; }
+  .quiz-scene-tag { display: inline-block; background: #f4f4f1; color: var(--text2); font-size: 11.5px; padding: 3px 10px; border-radius: 8px; margin-bottom: 8px; }
   .intro-card { background: var(--accent-light); border-radius: var(--radius); padding: 1rem 1.1rem; margin-bottom: 1rem; }
   .intro-title { font-size: 12px; font-weight: 600; color: var(--accent-dark); margin-bottom: 10px; }
   .intro-line { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
@@ -251,8 +256,9 @@ function saveProgress(sceneId, score, total){
 }
 
 // ============ 状態 ============
-let view = "menu"; // menu | lesson | final
+let view = "menu"; // menu | lesson | final | review | reviewFinal
 let sceneIdx = 0, stepIdx = 0, score = 0, total = 0, answered = false;
+let reviewSet = [], reviewIdx = 0;
 let femaleVoice = null, voiceName = "";
 
 // ============ 音声（女性の声を優先） ============
@@ -310,12 +316,16 @@ function es(s){ return s.replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,
 function render(){
   if(view === "menu") renderMenu();
   else if(view === "final") renderFinal();
+  else if(view === "review") renderReview();
+  else if(view === "reviewFinal") renderReviewFinal();
   else renderLesson();
 }
 
 function renderMenu(){
   const app = document.getElementById('app');
   const progress = loadProgress();
+  const rb = progress['review'];
+  const reviewBest = rb && rb.done && rb.total > 0 ? '｜ベスト ' + rb.score + '/' + rb.total : '';
   const items = scenes.map((s,i)=>{
     const p = progress[s.id];
     const badge = p && p.done
@@ -337,6 +347,10 @@ function renderMenu(){
       </div>
     </div>
     <div class="menu-grid">${items}</div>
+    <button class="review-btn" onclick="startReview()">
+      <div class="review-title">🎲 復習クイズにチャレンジ</div>
+      <div class="review-sub">全シーンからランダム出題${reviewBest}</div>
+    </button>
     <div class="tts-note">音声はブラウザのText-to-Speech（女性の声）を使用します</div>`;
 }
 
@@ -526,6 +540,114 @@ function renderFinal(){
       <div class="score-label">${total>0 ? 'クイズ正解数 — '+comment : 'レッスンを最後まで完了しました！'}</div>
       ${phraseList ? `<div class="summary">今日学んだフレーズ：<br>${phraseList}</div>` : ''}
       <button class="primary-btn" onclick="startScene(${sceneIdx})">もう一度チャレンジ ↺</button>
+      <button class="secondary-btn" onclick="backToMenu()">シーン一覧に戻る</button>
+    </div>`;
+}
+
+// ============ 復習クイズ（全シーン横断・ランダム出題） ============
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startReview(){
+  const all = [];
+  scenes.forEach(s => s.steps.forEach(st => {
+    if(st.type === 'quiz') all.push({ q: st, sceneName: s.name, sceneEmoji: s.emoji });
+  }));
+  reviewSet = shuffle(all);
+  reviewIdx = 0; score = 0; total = reviewSet.length; answered = false;
+  view = "review";
+  render();
+}
+
+function renderReview(){
+  const app = document.getElementById('app');
+  const item = reviewSet[reviewIdx];
+  const step = item.q;
+  const pct = Math.round(((reviewIdx + 1) / reviewSet.length) * 100);
+  const cHtml = step.choices.map((c,i)=>`
+    <button class="choice-btn" data-idx="${i}" id="choice${i}">
+      <span>${c}</span>
+      <span class="choice-speak" onclick="event.stopPropagation();speak('${es(c)}',1)">${speakIcon()}</span>
+    </button>`).join('');
+  app.innerHTML = `
+    <button class="back-link" onclick="backToMenu()">← シーン一覧に戻る</button>
+    <div class="header">
+      <div class="header-icon" style="font-size:20px;">🎲</div>
+      <div>
+        <div class="header-title">復習クイズ</div>
+        <div class="header-sub">${reviewIdx + 1} / ${reviewSet.length} 問</div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="card">
+      <div class="quiz-scene-tag">${item.sceneEmoji} ${item.sceneName}のシーンから</div>
+      <div class="situation" style="font-weight:600;color:var(--text);margin-bottom:1rem;">${step.question}</div>
+      <div class="choices">${cHtml}</div>
+      <div id="feedback" style="display:none;"></div>
+    </div>
+    <button class="primary-btn" id="nextBtn" style="display:none;">${reviewIdx + 1 < reviewSet.length ? '次の問題 →' : '結果を見る →'}</button>
+    <div class="tts-note">スピーカーボタンで発音を再生（女性の声）</div>`;
+
+  document.getElementById('nextBtn').addEventListener('click', reviewNext);
+  document.querySelectorAll('.choice-btn').forEach(btn=>{
+    btn.addEventListener('click', function(ev){
+      if(ev.target.closest('.choice-speak')) return;
+      if(answered) return;
+      answered = true;
+      const chosen = parseInt(this.dataset.idx), correct = step.answer;
+      const fb = document.getElementById('feedback');
+      fb.style.display = 'block';
+      if(chosen === correct){
+        score++;
+        this.classList.add('correct');
+        fb.className = 'feedback ok'; fb.textContent = step.feedback_ok;
+        speak(step.choices[correct], 1);
+      } else {
+        this.classList.add('wrong');
+        document.getElementById('choice'+correct).classList.add('correct');
+        fb.className = 'feedback ng'; fb.textContent = step.feedback_ng;
+        setTimeout(()=>speak(step.choices[correct],1), 600);
+      }
+      document.getElementById('nextBtn').style.display = 'block';
+    });
+  });
+}
+
+function reviewNext(){
+  answered = false;
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  if(reviewIdx + 1 < reviewSet.length){
+    reviewIdx++;
+    renderReview();
+  } else {
+    view = "reviewFinal";
+    render();
+  }
+}
+
+function renderReviewFinal(){
+  const app = document.getElementById('app');
+  saveProgress('review', score, total);
+  const pct = total > 0 ? Math.round((score/total)*100) : 0;
+  const comment = pct >= 100 ? "全問正解！すごい！" : pct >= 80 ? "素晴らしい！あと少しで満点！" : pct >= 60 ? "よくできました！" : "間違えたシーンをもう一度復習してみましょう！";
+  app.innerHTML = `
+    <div class="header">
+      <div class="header-icon" style="font-size:20px;">🎉</div>
+      <div>
+        <div class="header-title">復習クイズ 完了！</div>
+        <div class="header-sub">お疲れさまでした</div>
+      </div>
+    </div>
+    <div class="card final-card">
+      <div class="score-num">${score}/${total}</div>
+      <div class="score-label">${comment}</div>
+      <button class="primary-btn" onclick="startReview()">もう一度チャレンジ ↺</button>
       <button class="secondary-btn" onclick="backToMenu()">シーン一覧に戻る</button>
     </div>`;
 }
